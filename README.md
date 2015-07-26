@@ -63,7 +63,7 @@ newline/linefeed (\\n, LF) **only**. Use of carriage-return+newline
 (\\r\\n, CRLF) is not supported, and constitutes a malformed command.
 
 Aside from the hello exchange and the actual data, the command format
-takes the form `<command>:<param,...>\\n`.
+takes the form `<command>:<param,...>\n`.
 
 The protocol takes the old Unix style approach of being silent unless
 there is an error, or an explicit response is needed. This helps keep
