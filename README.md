@@ -55,6 +55,10 @@ three exchanges:
   1. Client sends authentication and a signed data sequence.
   1. Server accepts the data.
 
+At any point after the hello exchange, the server may issue notification
+commands to the client. These are advisory only, and may be ignored by
+the client.
+
 
 ## Protocol format
 The protocol is text-based, line oriented, using UTF-8 encoding.
@@ -75,7 +79,7 @@ The initial hello message(s) are in the form:
 S4PP/<ver> <supported-algorithms> <max-samples-per-sequence>
 ```
 Where:
-  - `ver` is the version of the S4PP protocol in use. Currently this is 0.9
+  - `ver` is the version of the S4PP protocol in use. Currently this is 1.0
   - `supported-algorithms` is a comma-separated list of cryptographic hash
     algorithms supported. This list MUST include SHA256.
   - `max-samples-per-sequence` is only included in the server hello, and
@@ -262,4 +266,93 @@ If for some reason (other than an invalid signature) the data could not be
 stored/handled, the NOK (not-OK) response is used. The NOK can be thought of
 as similar to a HTTP 500 Internal Server Error response.
 
+
+### Notification (S)
+```
+NTFY:<code>[,args...]
+```
+Where:
+  - `code` is a positive numeric code for a notification type. Values
+    0-99 (inclusive) are reserved by this specification. Values above this
+    range are available for vendor-specific extensions.
+  - `args` used depends on the `code`.
+
+At any point after the hello exchange, the server MAY issue one of more
+notifications. While the intent is that a client will act on such
+notifications, a client MAY ignore such directives, and MUST ignore all
+(to it) unknown codes. Some notifications will only make sense to issue
+once a client has successfully authenticated itself, others might be useful
+to issue even prior to authentication.
+
+A notification is purely a one-way, best-effort feature. A client does not
+explicitly acknowledge receipt or processing of a notification.
+
+The following notification codes are currently allocated:
+
+#### Notification: Time (S)
+```
+NTFY:0,<utc_sec>[,<utc_ms>]
+```
+Where:
+  - `utc_sec` is the current time expressed as UTC seconds.
+  - `utc_ms` is the millisecond part of the current UTC time.
+
+This notification is aimed at providing a simple time service "for free" to
+devices which either lack time-keeping capabilities, or do not have a
+sufficiently stable clock. The quality of this time service is low, and as
+such the best precision offered is milliseconds, with seconds being the
+only mandated precision. A server MAY omit the millisecond argument.
+
+Applications requiring higher precision or accuracy are recommended to
+employ proper time-keeping protocols, such as NTP.
+
+There is no requirement for a client to be authenticated before this
+notification is used.
+
+#### Notification: Firmware version (S)
+```
+NTFY:1,<version>[,url]
+```
+Where:
+  - `version` is the desired firmware version number of the client.
+  - `url` is the location of where to source said firmware from.
+
+This notification is aimed at providing a push notification for devices to
+either verify that they're running the correct firmware, or to direct a
+device to perform a firmware update. In particular for battery-operated
+devices this can save the device from having to separately poll a resource
+to determine whether it needs an upgrade.
+
+The `version` argument SHOULD be a number but MAY be a string, but in such
+case MUST NOT include the comma (`,`) character.
+
+Depending on the methodology employed by the devices, the server MAY include
+a URL for locating the firmware with.
+
+Typically this notification will only be used after a client has successfully
+authenticated.
+
+#### Notification: Flags (S)
+```
+NTFY:2:<setflags>,<clearflags>
+```
+Where:
+  - `setflags` is an ASCII hex-encoding of bits representing flags to set.
+  - `clearflags` is an ASCII hex-encoding of bits representing flags to clear.
+
+This notification provides a minimal approach for controlling device
+behaviour. The behaviour/feature set is expressed as a bit field,
+which is then hex-encoded. When encoding the flags, the server SHOULD NOT
+zero-pad the values to a fixed width as this needlessly increases
+the payload size. The server MUST use lower-case for any hex-digits
+used. A client supporting this notification MUST accept a lower-case
+hex-encoding, and MAY also accept upper-case. The total number of flags
+(bits) used SHOULD NOT exceed 128. The interpretation of each flag is
+implementation dependent. An empty flag set is expressed as zero. It is
+thus possible (but not recommended) to use `NTFY:2,0,0` as a no-op command.
+
+*Use case example:* A device has five LEDs, each mapped to the flags
+at positions zero to four (numerical values 1, 2, 4, 8 and 16 respectively).
+A notification may be sent to request the outer four LEDs be switched on,
+and the middle one off: `NTFY:2,1b,4`
 
