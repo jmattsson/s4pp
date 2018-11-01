@@ -425,6 +425,7 @@ needed in the protocol state machine.
 `E` = encrypted
 ```
 <c S4PP/1.2 SHA256 2000 AES-128-CBC
+<c TOK:f8763c330bf5ed2feafaf56c484649bf
 >c AUTH:SHA256,1234,a6c9a71e054ad9235210c7e23e3ce503ccabf8fd0b1a5da06c140c0b7c8e89bc
 >c HIDE:AES-128-CBC
 >E <random bytes>
@@ -436,5 +437,5 @@ needed in the protocol state machine.
 <c OK:0
 ```
 In the above example, the session key gets derived by encrypting the buffer
-`{ a6 c9 a7 1e 05 4a d9 23 52 10 c7 e2 3e 3c e5 03 }` with the shared key.
+`{ f8 76 3c 33 0b f5 ed 2f ea fa f5 6c 48 46 49 bf }` with the shared key.
 
