@@ -192,7 +192,9 @@ Where:
   - `data-format` is a numeric field specifying the format of the samples
     to follow. See further down for available data formats. Values \[0,99\]
     are reserved for offical data formats. Other values MAY be used for
-    experimental or site-specific formats.
+    experimental or site-specific formats. If the server does not support
+    the specified data format, it MUST send a reject command and it MAY
+    choose to terminate the session as well.
 
 ### Dictionary entry (C)
 Frequently, the biggest part of a sensor sample is the sensor name. Instead
@@ -219,7 +221,6 @@ Where:
     both a reference to the sensor type as well as the name of the node
     the sensor is attached to. This field MUST be non-empty.
 
-
 ### Data formats (C)
 #### Data format 0
 ```
@@ -235,6 +236,35 @@ Where:
     which case obviously the `unit-divisor` is not applicable). It MAY be
     NaN or +/-Inf, though these are discouraged.
 
+#### Data format 1
+This is an extended version of format 0, allowing for both a time span
+for the sample (e.g. to report average values), and also allows sample values
+consisting of multiple values, such as a list or (if known by both the
+client and the server) member fields making up a structured sample.
+```
+<idx>,<delta-t>,<span>,<value1>[,<value2>, ... <valueN>]
+```
+Where:
+  - `idx` is the dictionary index referring to the sensor this sample is from.
+  - `delta-t` is the delta from the previous timestamp in the sequence (with
+    the initial delta-t being relative to the `basetime` in the sequence
+    command). Negative deltas are valid.
+  - `span` is the time span from the effective timestamp the associated value
+    is applicable for. This effectively forms a from-to time range, with the
+    "from" value being the effective timestamp denoted by `delta-t`, and the
+    "to" value `delta-t`+`span`. This range SHOULD be interpreted as a
+    \[from, to\) range, with the "from" being inclusive and the "to"
+    exclusive. A value of zero implies `delta-t` is a point-in-time timstamp,
+    just as it is in data format 0. Negative span values SHOULD NOT be used,
+    and a server MAY reject such values.
+  - `value1` is the first sample value. The same conditions apply as for
+    `value` in data format 0.
+  - `value2` ... `valueN` are additional sample values, if applicable. Again,
+    the same conditions apply as for `value` in data format 0. If there
+    are no additional values, this part (including the preceding comma)
+    SHOULD be omitted. A server MAY opt to not support empty values, i.e.
+    the case where two commas follow each other, or the line ends with a
+    trailing comma.
 
 ### Sequence signature (C)
 ```
