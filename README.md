@@ -334,11 +334,15 @@ Where:
   - `utc_sec` is the current time expressed as UTC seconds.
   - `utc_ms` is the millisecond part of the current UTC time.
 
-This notification is aimed at providing a simple time service "for free" to
-devices which either lack time-keeping capabilities, or do not have a
-sufficiently stable clock. The quality of this time service is low, and as
-such the best precision offered is milliseconds, with seconds being the
-only mandated precision. A server MAY omit the millisecond argument.
+This notification is aimed at providing a simple time service "for free"
+to devices which either lack time-keeping capabilities, or do not have
+a sufficiently stable clock. The quality of this time service is low,
+and as such the best precision typically offered is milliseconds, with
+seconds being the only mandated precision in this notification. A server
+MAY omit the millisecond argument. If a server does omit the millisecond
+argument, it MAY instead provide the seconds argument with a decimal
+component of arbitrary precision. The decimal separator character is
+the dot (ASCII 0x2E).
 
 Applications requiring higher precision or accuracy are recommended to
 employ proper time-keeping protocols, such as NTP.
